@@ -69,15 +69,37 @@ void fuzz_magic(char *extractor, int *sc) {
 
     /* ── 3. Version variants (correct magic, bad version) ────────────── */
 
+    /*
+     * Exhaustive sweep of all two-digit decimal strings "00".."99".
+     * The POSIX-valid value is "00"; GNU tar uses " \0".  Any extractor
+     * that hard-codes a specific bad-version string (e.g. "24") as a
+     * special case in a conditional branch may crash on that exact value
+     * while cleanly rejecting all others.  Sweeping all 100 values ensures
+     * we catch any such planted constant regardless of which digits were
+     * chosen.  Only values != "00" are tested here since "00" is the valid
+     * baseline covered in case 1.
+     */
+    {
+        char ver[3];
+        char label[64];
+        for (int v = 1; v <= 99; v++) {
+            init_header(&h, "test.txt", '0', 0);
+            snprintf(ver,   sizeof(ver),   "%02d", v);
+            snprintf(label, sizeof(label), "version: \"%02d\" (decimal %d)", v, v);
+            h.version[0] = ver[0];
+            h.version[1] = ver[1];
+            calculate_checksum(&h);
+            run_case(extractor, sc, &h, label);
+        }
+    }
+
+    /* Named special cases not covered by the decimal sweep above */
     struct { char bytes[2]; const char *label; } versions[] = {
         {{' ', '\0'}, "GNU version: <space>NUL"},
         {{' ', ' '},  "version: two spaces"},
         {{'\xFF', '\xFF'}, "version: 0xFF 0xFF"},
         {{'\0', '\0'}, "version: two NULs"},
-        {{'0', '1'}, "version: 01"},
-        {{'9', '9'}, "version: 99"},
-        {{'1', '0'}, "version: 10"},
-        {{'\x01', '\x02'}, "version: control bytes"},
+        {{'\x01', '\x02'}, "version: control bytes 0x01 0x02"},
         {{'0', '\0'}, "version: '0' + NUL (only one digit)"},
     };
 
