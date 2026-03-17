@@ -6,13 +6,8 @@
 #include <sys/stat.h>
 #include "extractor.h"
 
-/*
- * Runs the extractor inside a temporary sub-directory so that any files
- * it extracts don't pollute the fuzzer's working directory.
- * We pass the absolute path of the archive and extractor to the child.
- */
+
 int run_extractor(char *extractor, char *tarfile) {
-    /* Build absolute paths before chdir */
     char abs_extractor[512];
     char abs_tar[512];
 
@@ -28,8 +23,6 @@ int run_extractor(char *extractor, char *tarfile) {
     else
         snprintf(abs_tar, sizeof(abs_tar), "%s", tarfile);
 
-    /* Create a temp dir, run extractor there, then clean up.
-     * All paths are quoted to handle spaces in directory names. */
     char cmd[2048];
     snprintf(cmd, sizeof(cmd),
              "TMPD=$(mktemp -d) && cp \"%s\" \"$TMPD/archive.tar\" && "
@@ -72,12 +65,4 @@ void save_success(char *tarfile, int index) {
     fclose(src);
     fclose(dst);
 
-    /* Append crash info to the "crashing" log file */
-    FILE *log = fopen("crashing", "a");
-    if (log) {
-        fprintf(log, "Crash #%d saved as %s\n", index, dest);
-        fclose(log);
-    }
-
-    printf("[+] Crash sauvegarde : %s\n", dest);
 }

@@ -3,11 +3,7 @@
 #include <string.h>
 #include "help.h"
 
-/**
- * Computes the checksum for a tar header and encode it on the header
- * @param entry: The tar header
- * @return the value of the checksum
- */
+
 unsigned int calculate_checksum(struct tar_t *entry) {
     // use spaces for the checksum bytes while calculating the checksum
     memset(entry->chksum, ' ', 8);

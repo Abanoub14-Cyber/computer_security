@@ -6,7 +6,6 @@
 #include "extractor.h"
 #include "fuzz_cases.h"
 
-/* ── helper ──────────────────────────────────────────────────────────── */
 
 static void run_case(char *extractor, int *sc,
                      struct tar_t *h, const char *label) {
@@ -20,12 +19,11 @@ static void run_case(char *extractor, int *sc,
     }
 }
 
-/* ── public entry point ──────────────────────────────────────────────── */
 
 void fuzz_linkname(char *extractor, int *sc) {
     struct tar_t h;
 
-    /* ── 1. No null terminator ───────────────────────────────────────── */
+    // case 1 : no null terminator
 
     init_header(&h, "link.txt", '2', 0);
     memset(h.linkname, 'A', 100);
@@ -42,8 +40,7 @@ void fuzz_linkname(char *extractor, int *sc) {
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "regular file: non-empty linkname no null");
 
-    /* ── 2. Extreme byte values ──────────────────────────────────────── */
-
+    // case 2 : extreme byte values
     init_header(&h, "link.txt", '2', 0);
     memset(h.linkname, '\xFF', 100);
     calculate_checksum(&h);
@@ -54,7 +51,7 @@ void fuzz_linkname(char *extractor, int *sc) {
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "symlink: empty linkname (all NUL)");
 
-    /* ── 3. Maximum valid length (99 chars + NUL at byte 99) ─────────── */
+    // case 3 : Maximum valid length 
 
     init_header(&h, "link.txt", '2', 0);
     memset(h.linkname, 'C', 99);
@@ -68,7 +65,7 @@ void fuzz_linkname(char *extractor, int *sc) {
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "hardlink: max length 99 chars + NUL");
 
-    /* ── 4. Path traversal in link target ────────────────────────────── */
+    // case 4 : Path traversal in link target 
 
     init_header(&h, "link.txt", '2', 0);
     strncpy(h.linkname, "../../etc/passwd", 100);
@@ -76,7 +73,6 @@ void fuzz_linkname(char *extractor, int *sc) {
     run_case(extractor, sc, &h, "symlink: path traversal ../../etc/passwd");
 
     init_header(&h, "link.txt", '2', 0);
-    /* fill with as many ../ as fit */
     memset(h.linkname, 0, 100);
     const char *seg = "../";
     for (int i = 0; i + 3 <= 99; i += 3)
@@ -84,7 +80,7 @@ void fuzz_linkname(char *extractor, int *sc) {
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "symlink: maximum depth path traversal");
 
-    /* ── 5. Absolute path as link target ─────────────────────────────── */
+    // case 5 : Absolute path as link target 
 
     init_header(&h, "link.txt", '2', 0);
     strncpy(h.linkname, "/etc/passwd", 100);
@@ -96,7 +92,7 @@ void fuzz_linkname(char *extractor, int *sc) {
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "symlink: absolute path root /");
 
-    /* ── 6. linkname filled with slashes ─────────────────────────────── */
+    // case 6 : linkname filled with slashes 
 
     init_header(&h, "link.txt", '2', 0);
     memset(h.linkname, '/', 99);
@@ -104,7 +100,7 @@ void fuzz_linkname(char *extractor, int *sc) {
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "symlink: all slashes");
 
-    /* ── 7. Embedded null bytes ──────────────────────────────────────── */
+    // case 7 : Embedded null bytes 
 
     init_header(&h, "link.txt", '2', 0);
     memset(h.linkname, '\0', 100);
@@ -112,28 +108,28 @@ void fuzz_linkname(char *extractor, int *sc) {
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "symlink: embedded null byte in linkname");
 
-    /* ── 8. Self-referencing symlink (name == linkname) ──────────────── */
+    // case 8 : name == linkname  
 
     init_header(&h, "selflink", '2', 0);
     strncpy(h.linkname, "selflink", 100);
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "symlink: self-referencing (name == linkname)");
 
-    /* ── 9. Hardlink target not present in archive ───────────────────── */
+    // case 9 : Hardlink target not present in archive 
 
     init_header(&h, "hard.txt", '1', 0);
     strncpy(h.linkname, "nonexistent_target.txt", 100);
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "hardlink: target not in archive");
 
-    /* ── 10. Valid-looking linkname on regular file ──────────────────── */
+    // case 10 : Valid-looking linkname on regular file 
 
     init_header(&h, "test.txt", '0', 0);
     strncpy(h.linkname, "some_target.txt", 100);
     calculate_checksum(&h);
     run_case(extractor, sc, &h, "regular file: valid-looking linkname (should be ignored)");
 
-    /* ── 11. Chained symlinks A → B → A (circular) ───────────────────── */
+    // case 11 : circular
 
     {
         FILE *f = fopen("archive.tar", "wb");
@@ -152,18 +148,17 @@ void fuzz_linkname(char *extractor, int *sc) {
         write_end(f);
         fclose(f);
         if (run_extractor(extractor, "archive.tar") == 1) {
-            printf("[linkname] chained symlinks A->B->A (circular)\n");
+            printf("[linkname]  A->B->A \n");
             save_success("archive.tar", (*sc)++);
         }
     }
 
-    /* ── 12. Hardlink declared before its target exists in archive ───── */
+    // case 12 : hardlink declared before target in archive
 
     {
         FILE *f = fopen("archive.tar", "wb");
         struct tar_t hlink, htarget;
 
-        /* hardlink comes first, target comes second */
         init_header(&hlink, "hard.txt", '1', 0);
         strncpy(hlink.linkname, "original.txt", 100);
         calculate_checksum(&hlink);

@@ -6,24 +6,13 @@
 #include "extractor.h"
 #include "fuzz_cases.h"
 
-/*
- * fuzz_typeflag  –  tests semantic edge-cases for the typeflag field.
- *
- * We do NOT iterate blindly over all 256 byte values: that would be
- * unsound (the assignment forbids it) and would miss the real bugs.
- * Instead we cover:
- *   • Every POSIX-defined type used in an unexpected but plausible way.
- *   • Boundary / rarely-handled values just outside the defined range.
- *   • Combinations of typeflag with contradictory other fields (size,
- *     linkname, trailing slash in name, …).
- */
+
 void fuzz_typeflag(char *extractor, int *sc) {
     FILE *f;
     struct tar_t h;
 
-    /* ── 1. Undefined / reserved single-byte values ─────────────────── */
+    // 1. Invalid / undefined typeflag values
 
-    /* '8'..'9' : just above the last defined POSIX type ('7') */
     for (char c = '8'; c <= '9'; c++) {
         f = fopen("archive.tar", "wb");
         init_header(&h, "test.txt", c, 0);
@@ -37,7 +26,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         }
     }
 
-    /* 'A'..'Z' : upper-case letters are extension flags in some variants */
     for (char c = 'A'; c <= 'Z'; c++) {
         f = fopen("archive.tar", "wb");
         init_header(&h, "test.txt", c, 0);
@@ -51,8 +39,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         }
     }
 
-    /* Non-printable / high-byte values: \x80 and \xFF are commonly
-       mistaken for valid flags by extractors that use signed char */
     unsigned char probes[] = { 0x01, 0x7F, 0x80, 0xFE, 0xFF };
     for (int i = 0; i < (int)(sizeof probes); i++) {
         f = fopen("archive.tar", "wb");
@@ -66,9 +52,8 @@ void fuzz_typeflag(char *extractor, int *sc) {
         }
     }
 
-    /* ── 2. Contradictory typeflag + size combinations ───────────────── */
+    // 2. Contradictory typeflag + size combinations
 
-    /* Directory ('5') but size > 0 */
     f = fopen("archive.tar", "wb");
     init_header(&h, "mydir/", '5', 4096);
     calculate_checksum(&h);
@@ -80,7 +65,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Symlink ('2') with actual file data */
     f = fopen("archive.tar", "wb");
     init_header(&h, "link.txt", '2', 100);
     strncpy(h.linkname, "/etc/passwd", 100);
@@ -95,7 +79,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Hard link ('1') with enormous declared size */
     f = fopen("archive.tar", "wb");
     init_header(&h, "hard.txt", '1', 0);
     memcpy(h.size, "77777777777\0", 12);
@@ -109,7 +92,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Regular file ('0') whose name ends with '/' — ambiguous */
     f = fopen("archive.tar", "wb");
     init_header(&h, "ambiguous/", '0', 0);
     calculate_checksum(&h);
@@ -121,7 +103,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Null typeflag ('\0') with enormous size */
     f = fopen("archive.tar", "wb");
     init_header(&h, "test.txt", '\0', 0);
     memcpy(h.size, "77777777777\0", 12);
@@ -134,9 +115,8 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 3. Typeflag + data that looks like a nested header ──────────── */
+    // 3. Typeflag + data that looks like a nested header
 
-    /* Directory ('5') with size=512 and a fake header as its "data" */
     f = fopen("archive.tar", "wb");
     init_header(&h, "mydir/", '5', 512);
     calculate_checksum(&h);
@@ -151,9 +131,8 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 4. Rarely-handled but defined types ─────────────────────────── */
+    // 4. Rarely-handled but defined types 
 
-    /* FIFO ('6') with non-zero size */
     f = fopen("archive.tar", "wb");
     init_header(&h, "myfifo", '6', 512);
     calculate_checksum(&h);
@@ -165,7 +144,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Character device ('3') with data */
     f = fopen("archive.tar", "wb");
     init_header(&h, "mydev", '3', 1024);
     calculate_checksum(&h);
@@ -179,7 +157,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Block device ('4') with data */
     f = fopen("archive.tar", "wb");
     init_header(&h, "myblk", '4', 512);
     calculate_checksum(&h);
@@ -193,7 +170,6 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Contiguous file ('7') — reserved, rarely handled */
     f = fopen("archive.tar", "wb");
     init_header(&h, "contig.dat", '7', 10);
     write_tar(f, &h, "0123456789", 10);
@@ -204,7 +180,7 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 5. Self-referential / circular symlink ──────────────────────── */
+    // 5. Self-referential / circular symlink
 
     f = fopen("archive.tar", "wb");
     init_header(&h, "selflink", '2', 0);
@@ -218,7 +194,7 @@ void fuzz_typeflag(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 6. Regular file with negative size ──────────────────────────── */
+    // 6. Regular file with negative size
 
     f = fopen("archive.tar", "wb");
     init_header(&h, "neg.txt", '0', 0);

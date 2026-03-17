@@ -6,8 +6,8 @@
 static void fuzz_all(char *extractor) {
     int sc = 0;
 
-    fuzz_numeric_fields(extractor, &sc);   /* size, mtime, uid, gid, mode */
-    fuzz_typeflag(extractor, &sc);         /* typeflag + combo cases       */
+    fuzz_numeric_fields(extractor, &sc);   
+    fuzz_typeflag(extractor, &sc);         
     fuzz_name(extractor, &sc);
     fuzz_linkname(extractor, &sc);
     fuzz_checksum(extractor, &sc);
@@ -25,8 +25,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    FILE *f = fopen("crashing", "w");
-    if (f) fclose(f);
 
     printf("[*] Starting fuzzer on: %s\n", argv[1]);
     fuzz_all(argv[1]);

@@ -7,4 +7,4 @@ all: $(SRCS)
 	$(CC) $(CFLAGS) $(SRCS) -o fuzzer
 
 clean:
-	rm -f fuzzer archive.tar crashing success_*.tar
+	rm -f fuzzer archive.tar success_*.tar

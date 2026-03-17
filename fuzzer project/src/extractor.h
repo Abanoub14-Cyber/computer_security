@@ -1,10 +1,10 @@
 #ifndef EXTRACTOR_H
 #define EXTRACTOR_H
 
-/* Lance l'extracteur sur tarfile, retourne 1 si crash détecté */
+// return 1 if crahs detected
 int  run_extractor(char *extractor, char *tarfile);
 
-/* Copie tarfile en success_XXX.tar */
+// copy tarfile in success tar
 void save_success(char *tarfile, int index);
 
 #endif

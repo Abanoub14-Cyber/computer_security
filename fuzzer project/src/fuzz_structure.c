@@ -7,7 +7,6 @@
 #include "extractor.h"
 #include "fuzz_cases.h"
 
-/* ── fuzz_structure ──────────────────────────────────────────────────── */
 
 void fuzz_structure(char *extractor, int *sc) {
     FILE *f;
@@ -15,9 +14,8 @@ void fuzz_structure(char *extractor, int *sc) {
     char zeros[512];
     memset(zeros, 0, 512);
 
-    /* ── 1. End-of-archive marker variants ───────────────────────────── */
+    // 1. End of archive marker variations
 
-    /* Zero-byte file */
     f = fopen("archive.tar", "wb");
     fclose(f);
     if (run_extractor(extractor, "archive.tar") == 1) {
@@ -25,7 +23,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Only the two end-of-archive zero blocks, no entries */
     f = fopen("archive.tar", "wb");
     write_end(f);
     fclose(f);
@@ -34,7 +31,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Only one zero block instead of two */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 0);
     write_tar(f, &h1, NULL, 0);
@@ -45,7 +41,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Three consecutive zero blocks */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 0);
     write_tar(f, &h1, NULL, 0);
@@ -58,7 +53,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Many zero blocks (10) */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 0);
     write_tar(f, &h1, NULL, 0);
@@ -70,12 +64,11 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* End-of-archive marker in the middle, valid entry after it */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "before.txt", '0', 5);
     write_tar(f, &h1, "hello", 5);
-    write_end(f);                           /* end marker here */
-    init_header(&h2, "after.txt", '0', 5);  /* entry after end marker */
+    write_end(f);                           
+    init_header(&h2, "after.txt", '0', 5);  
     write_tar(f, &h2, "world", 5);
     fclose(f);
     if (run_extractor(extractor, "archive.tar") == 1) {
@@ -83,9 +76,8 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 2. Truncated archives ───────────────────────────────────────── */
+    // 2. Truncated archives
 
-    /* Header truncated to 1 byte */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 0);
     fwrite(&h1, 1, 1, f);
@@ -95,7 +87,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Header truncated to exactly half (256 bytes) */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 0);
     fwrite(&h1, 256, 1, f);
@@ -105,7 +96,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Header truncated to 511 bytes (one byte short) */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 0);
     fwrite(&h1, 511, 1, f);
@@ -115,7 +105,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Valid file then truncated second header (100 bytes) */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "first.txt", '0', 5);
     write_tar(f, &h1, "hello", 5);
@@ -127,7 +116,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Header with no end-of-archive at all */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 0);
     fwrite(&h1, 512, 1, f);
@@ -137,7 +125,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Declared size > actual data written */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 1000);
     write_tar(f, &h1, "hi", 2);
@@ -148,7 +135,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Declared size > actual data, no end marker */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "trunc.txt", '0', 1024);
     fwrite(&h1, 512, 1, f);
@@ -161,9 +147,8 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 3. Size vs. data mismatches ─────────────────────────────────── */
+    // 3. Size field edge cases
 
-    /* Declared size < actual data written */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 2);
     char bigdata[1000];
@@ -176,7 +161,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Two files, second declares huge size */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "file1.txt", '0', 5);
     write_tar(f, &h1, "hello", 5);
@@ -191,18 +175,13 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 4. Misaligned data blocks ───────────────────────────────────── */
+    // 4. Misaligned headers due to missing padding
 
-    /*
-     * Write a file entry but pad with only 1 byte instead of the correct
-     * 507 bytes, so the next header starts at offset 513+5+1=519 (wrong).
-     * The extractor reads garbage as a header.
-     */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "file1.txt", '0', 5);
     fwrite(&h1, 512, 1, f);
     fwrite("hello", 5, 1, f);
-    fwrite("\x00", 1, 1, f);              /* only 1 byte of padding */
+    fwrite("\x00", 1, 1, f);              
     init_header(&h2, "file2.txt", '0', 0);
     fwrite(&h2, 512, 1, f);
     write_end(f);
@@ -212,13 +191,10 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /*
-     * No padding at all after data — next header immediately follows data.
-     */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "file1.txt", '0', 5);
     fwrite(&h1, 512, 1, f);
-    fwrite("hello", 5, 1, f);            /* no padding */
+    fwrite("hello", 5, 1, f);            
     init_header(&h2, "file2.txt", '0', 0);
     fwrite(&h2, 512, 1, f);
     write_end(f);
@@ -228,9 +204,8 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 5. Corrupt / junk headers ───────────────────────────────────── */
+    // 5. Headers with unusual content 
 
-    /* Header all 0xFF */
     f = fopen("archive.tar", "wb");
     memset(&h1, '\xFF', 512);
     fwrite(&h1, 512, 1, f);
@@ -241,7 +216,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Header all 0x00 (not treated as end marker — extra zero block before end) */
     f = fopen("archive.tar", "wb");
     memset(&h1, '\x00', 512);
     fwrite(&h1, 512, 1, f);
@@ -252,7 +226,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Deterministic garbage header */
     f = fopen("archive.tar", "wb");
     char garbage[512];
     for (int i = 0; i < 512; i++)
@@ -265,7 +238,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Valid entry then all-0xFF header */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "first.txt", '0', 0);
     write_tar(f, &h1, NULL, 0);
@@ -278,7 +250,6 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Single 512-byte block of 0x01 (almost-zero, not an end marker) */
     f = fopen("archive.tar", "wb");
     memset(&h1, '\x01', 512);
     fwrite(&h1, 512, 1, f);
@@ -288,9 +259,9 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 6. Interleaved valid and corrupt entries ────────────────────── */
+    // 6. Interleaved valid and corrupt entries
 
-    /* valid -> corrupt -> valid -> corrupt */
+    // valid -> corrupt -> valid -> corrupt
     f = fopen("archive.tar", "wb");
     init_header(&h1, "good1.txt", '0', 0);
     write_tar(f, &h1, NULL, 0);
@@ -307,21 +278,14 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 7. Size field causes next header to land inside data ─────────── */
+    // 7. Size field causes next header to land inside data
 
-    /*
-     * file1 has size=0 but we write 512 bytes of data anyway and set
-     * size=512 on file1.  Then file2's header begins right after file1's
-     * data block — extractor must skip exactly one 512-byte data block
-     * to find it.  We corrupt file2's size so it tries to seek into
-     * file3's header bytes.
-     */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "file1.txt", '0', 512);
     fwrite(&h1, 512, 1, f);
     char blk[512];
     memset(blk, 'A', 512);
-    fwrite(blk, 512, 1, f);             /* one data block */
+    fwrite(blk, 512, 1, f);             
     init_header(&h2, "file2.txt", '0', 0);
     memcpy(h2.size, "77777777777\0", 12);
     calculate_checksum(&h2);
@@ -335,9 +299,9 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 8. Bad checksum sequences ───────────────────────────────────── */
+    // 8. Bad checksum sequences
 
-    /* Bad checksum on first entry, valid second */
+    // Bad checksum on first entry, valid second
     f = fopen("archive.tar", "wb");
     init_header(&h1, "bad.txt", '0', 5);
     memcpy(h1.chksum, "00000000", 8);
@@ -355,9 +319,8 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 9. Version / magic structural issues ────────────────────────── */
+    // 9. Bad magic and version fields
 
-    /* Correct magic, wrong version */
     f = fopen("archive.tar", "wb");
     init_header(&h1, "test.txt", '0', 0);
     h1.version[0] = '\xFF';
@@ -371,7 +334,7 @@ void fuzz_structure(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* ── 10. Multi-directory then huge-size file ─────────────────────── */
+    // 10. Multi-directory then huge-size file
 
     f = fopen("archive.tar", "wb");
     init_header(&h1, "dir1/", '5', 0);
@@ -390,14 +353,11 @@ void fuzz_structure(char *extractor, int *sc) {
     }
 }
 
-/* ── fuzz_many_files ─────────────────────────────────────────────────── */
-
 void fuzz_many_files(char *extractor, int *sc) {
     FILE *f;
     struct tar_t h;
     char name[32];
 
-    /* 1000 valid files in a row */
     f = fopen("archive.tar", "wb");
     for (int i = 0; i < 1000; i++) {
         snprintf(name, sizeof(name), "file_%04d.txt", i);
@@ -411,7 +371,6 @@ void fuzz_many_files(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* 1000 zero-size files — stresses header parsing without data I/O */
     f = fopen("archive.tar", "wb");
     for (int i = 0; i < 1000; i++) {
         snprintf(name, sizeof(name), "empty_%04d.txt", i);
@@ -425,7 +384,6 @@ void fuzz_many_files(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Mix of types: dirs, files, symlinks */
     f = fopen("archive.tar", "wb");
     for (int i = 0; i < 100; i++) {
         snprintf(name, sizeof(name), "dir_%03d/", i);
@@ -449,7 +407,6 @@ void fuzz_many_files(char *extractor, int *sc) {
         save_success("archive.tar", (*sc)++);
     }
 
-    /* Many files followed by one with a corrupt header */
     f = fopen("archive.tar", "wb");
     for (int i = 0; i < 100; i++) {
         snprintf(name, sizeof(name), "file_%04d.txt", i);
