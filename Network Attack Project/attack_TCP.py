@@ -21,8 +21,7 @@ def syn_scan(target, start_port, end_port):
         src_port = randint(1024, 65535)
         pkt = IP(dst=target) / TCP(sport=src_port, dport=port, flags="S")
         reply = sr1(pkt, timeout=0.1, verbose=0)
-
-        elif reply.haslayer(TCP):
+        if reply is not None and reply.haslayer(TCP):
             flags = reply[TCP].flags
             if flags == 0x12:  # SYN+ACK → port open
                 print(f"[+] Port {port}/tcp OPEN")
