@@ -7,6 +7,6 @@ nft add chain inet icmp_protect rate_limit_icmp '{ type filter hook forward prio
 nft add rule inet icmp_protect rate_limit_icmp \
     ip protocol icmp icmp type echo-request \
     meter rate_meter \
-    '{ ip saddr timeout 60s limit rate over 5/second burst 3 packets }' \
+    '{ ip saddr limit rate over 5/second burst 3 packets }' \
     drop
 

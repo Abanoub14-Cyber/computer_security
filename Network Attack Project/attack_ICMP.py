@@ -20,7 +20,7 @@ def ping_sweep(subnet):
     for ip in targets:
         ip_str = str(ip)
         pkt = IP(dst=ip_str) / ICMP()
-        reply = sr1(pkt, timeout=1, verbose=0)
+        reply = sr1(pkt, timeout=0.1, verbose=0)
         if reply is not None and reply.haslayer(ICMP):
             # type 0 = echo-reply
             if reply[ICMP].type == 0:
@@ -34,3 +34,4 @@ def ping_sweep(subnet):
 if __name__ == "__main__":
     subnet = sys.argv[1] if len(sys.argv) > 1 else "10.12.0.0/24"
     ping_sweep(subnet)
+
