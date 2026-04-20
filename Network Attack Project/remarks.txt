@@ -1,0 +1,2 @@
+- explain why whe added "nft add rule inet r2_baseline r2_forwarding ip saddr 10.12.0.0/24 ip daddr 10.1.0.0/24 accept" in r2 rules : without it the pings from ws to dmz get redirected in R2 (back to r1) and blocks the traffic => it's not an issue to accept the traffic from dmz to ws because it gets blocked by r1 later one (its just a weird work around lol)
+

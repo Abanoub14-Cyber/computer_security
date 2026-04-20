@@ -104,7 +104,7 @@ def stop_services(net: Mininet) -> None:
     info(net['ftp'].cmd("killall vsftpd"))
 
 
-def run():
+def run(protections=[]):
     topo = TopoSecu()
     net = Mininet(topo=topo)
 
@@ -114,7 +114,7 @@ def run():
     start_services(net)
 
     net.start()
-
+    apply_protections(net, protections)
     apply_baseline(net)
 
     CLI(net)
@@ -142,6 +142,15 @@ def apply_baseline(net: Mininet) -> None:
     info("*** Applying baseline firewall rules on r2\n")
     net['r2'].cmd('/bin/sh rules_r2.sh')
 
+def apply_protections(net: Mininet, protections):
+    for prot in protections:
+        print(prot)
+        if prot=="i":
+            apply_ICMP_protection(net)
+
+def apply_ICMP_protection(net: Mininet) -> None:
+    info("*** Applying ICMP protection rules on r2\n")
+    net['r2'].cmd('/bin/sh protect_ICMP.sh')
 
 if __name__ == '__main__':
 
@@ -152,16 +161,17 @@ if __name__ == '__main__':
     )
     # Optional flag -p
     parser.add_argument("-p", "--pingall", action="store_true", help="Perform pingall test")
+    parser.add_argument("-i","--ICMP_protection", action="store_true", help="Applying ICMP scan protection")
     # Parse arguments
     args = parser.parse_args()
 
     setLogLevel('info')
 
-
+    protections=[]
     if args.pingall:
         # Deploy topology, run pingall test, then exit
         ping_all()
-    else:
-        # Deploy topology, open CLI
-        run()
+    if args.ICMP_protection:
+        protections.append("i")
+    run(protections)
 
