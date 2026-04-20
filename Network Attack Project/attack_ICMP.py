@@ -2,14 +2,14 @@
 """
 ICMP ping sweep attack.
 Run from the Internet host (10.2.0.2) against the DMZ subnet.
-Usage: python3 attack_ping_sweep.py <target_subnet>
-Example: python3 attack_ping_sweep.py 10.12.0.0/24
+Usage: python3 attack_ICMP.py <target_subnet>
+Example: python3 attack_ICMP.py 10.12.0.0/24
 """
 
 import sys
 from scapy.all import IP, ICMP, sr1, conf
 
-conf.verb = 0  # silence scapy's default output
+conf.verb = 0
 
 def ping_sweep(subnet):
     from ipaddress import ip_network

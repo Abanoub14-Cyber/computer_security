@@ -147,10 +147,16 @@ def apply_protections(net: Mininet, protections):
         print(prot)
         if prot=="i":
             apply_ICMP_protection(net)
+        if prot=="t":
+            apply_TCP_protection(net)
 
 def apply_ICMP_protection(net: Mininet) -> None:
     info("*** Applying ICMP protection rules on r2\n")
     net['r2'].cmd('/bin/sh protect_ICMP.sh')
+
+def apply_TCP_protection(net: Mininet) -> None:
+    info("*** Applying TCP protection rules on r2\n")
+    net['r2'].cmd('/bin/sh protect_TCP.sh')
 
 if __name__ == '__main__':
 
@@ -162,6 +168,7 @@ if __name__ == '__main__':
     # Optional flag -p
     parser.add_argument("-p", "--pingall", action="store_true", help="Perform pingall test")
     parser.add_argument("-i","--ICMP_protection", action="store_true", help="Applying ICMP scan protection")
+    parser.add_argument("-t", "--TCP_protection", action= "store_true", help="Applying TCP scan protection")
     # Parse arguments
     args = parser.parse_args()
 
@@ -169,9 +176,10 @@ if __name__ == '__main__':
 
     protections=[]
     if args.pingall:
-        # Deploy topology, run pingall test, then exit
         ping_all()
     if args.ICMP_protection:
         protections.append("i")
+    if args.TCP_protection:
+        protections.append("t")
     run(protections)
 
