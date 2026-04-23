@@ -149,7 +149,9 @@ def apply_protections(net: Mininet, protections):
             apply_ICMP_protection(net)
         if prot=="t":
             apply_TCP_protection(net)
-
+        if prot=="s":
+            apply_SSH_protection(net)
+            
 def apply_ICMP_protection(net: Mininet) -> None:
     info("*** Applying ICMP protection rules on r2\n")
     net['r2'].cmd('/bin/sh protect_ICMP.sh')
@@ -157,6 +159,11 @@ def apply_ICMP_protection(net: Mininet) -> None:
 def apply_TCP_protection(net: Mininet) -> None:
     info("*** Applying TCP protection rules on r2\n")
     net['r2'].cmd('/bin/sh protect_TCP.sh')
+
+def apply_SSH_protection(net: Mininet) -> None:
+    info("*** Applying SSH protection rules on r2\n")
+    net['r2'].cmd('/bin/sh protect_SSH.sh')
+
 
 if __name__ == '__main__':
 
@@ -169,6 +176,8 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--pingall", action="store_true", help="Perform pingall test")
     parser.add_argument("-i","--ICMP_protection", action="store_true", help="Applying ICMP scan protection")
     parser.add_argument("-t", "--TCP_protection", action= "store_true", help="Applying TCP scan protection")
+    parser.add_argument("-s", "--SSH_protection", action= "store_true", help="Applying SSH brute force protection")
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -181,5 +190,7 @@ if __name__ == '__main__':
         protections.append("i")
     if args.TCP_protection:
         protections.append("t")
+    if args.SSH_protection:
+        protections.append("s")
     run(protections)
 
