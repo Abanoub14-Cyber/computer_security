@@ -151,6 +151,8 @@ def apply_protections(net: Mininet, protections):
             apply_TCP_protection(net)
         if prot=="s":
             apply_SSH_protection(net)
+        if prot=="a":
+            apply_ARP_protection(net)
             
 def apply_ICMP_protection(net: Mininet) -> None:
     info("*** Applying ICMP protection rules on r2\n")
@@ -163,6 +165,21 @@ def apply_TCP_protection(net: Mininet) -> None:
 def apply_SSH_protection(net: Mininet) -> None:
     info("*** Applying SSH protection rules on r2\n")
     net['r2'].cmd('/bin/sh protect_SSH.sh')
+
+def apply_ARP_protection(net: Mininet) -> None:
+    info("*** Applying ARP poisoning protection rules on ws2\n")
+    
+    # Discover real MACs from the topology directly
+    r1_mac = net['r1'].MAC('r1-eth0')
+    ws3_mac = net['ws3'].MAC('ws3-eth0')
+    
+    info(f"*** r1's MAC: {r1_mac}\n")
+    info(f"*** ws3's MAC: {ws3_mac}\n")
+    
+    # Pass them to the script as arguments
+    cmd = f'/bin/sh protect_ARP.sh {r1_mac} {ws3_mac}'
+    output = net['ws2'].cmd(cmd)
+    info(output)
 
 
 if __name__ == '__main__':
@@ -177,6 +194,7 @@ if __name__ == '__main__':
     parser.add_argument("-i","--ICMP_protection", action="store_true", help="Applying ICMP scan protection")
     parser.add_argument("-t", "--TCP_protection", action= "store_true", help="Applying TCP scan protection")
     parser.add_argument("-s", "--SSH_protection", action= "store_true", help="Applying SSH brute force protection")
+    parser.add_argument("-a", "--ARP_protection", action= "store_true", help="Applying ARP poisoning protection")
 
     # Parse arguments
     args = parser.parse_args()
@@ -192,5 +210,7 @@ if __name__ == '__main__':
         protections.append("t")
     if args.SSH_protection:
         protections.append("s")
+    if args.ARP_protection:
+        protections.append("a")
     run(protections)
 
