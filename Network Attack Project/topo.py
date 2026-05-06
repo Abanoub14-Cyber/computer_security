@@ -138,9 +138,9 @@ def ping_all():
 
 def apply_baseline(net: Mininet) -> None:
     info("*** Applying baseline firewall rules on r1\n")
-    net['r1'].cmd('/bin/sh rules_r1.sh')
+    net['r1'].cmd('/bin/sh protection/rules_r1.sh')
     info("*** Applying baseline firewall rules on r2\n")
-    net['r2'].cmd('/bin/sh rules_r2.sh')
+    net['r2'].cmd('/bin/sh protection/rules_r2.sh')
 
 def apply_protections(net: Mininet, protections):
     for prot in protections:
@@ -158,15 +158,15 @@ def apply_protections(net: Mininet, protections):
             
 def apply_ICMP_protection(net: Mininet) -> None:
     info("*** Applying ICMP protection rules on r2\n")
-    net['r2'].cmd('/bin/sh protect_ICMP.sh')
+    net['r2'].cmd('/bin/sh protection/protect_ICMP.sh')
 
 def apply_TCP_protection(net: Mininet) -> None:
     info("*** Applying TCP protection rules on r2\n")
-    net['r2'].cmd('/bin/sh protect_TCP.sh')
+    net['r2'].cmd('/bin/sh protection/protect_TCP.sh')
 
 def apply_SSH_protection(net: Mininet) -> None:
     info("*** Applying SSH protection rules on r2\n")
-    net['r2'].cmd('/bin/sh protect_SSH.sh')
+    net['r2'].cmd('/bin/sh protection/protect_SSH.sh')
 
 def apply_ARP_protection(net: Mininet) -> None:
     info("*** Applying ARP poisoning protection rules on ws2\n")
@@ -179,13 +179,13 @@ def apply_ARP_protection(net: Mininet) -> None:
     info(f"*** ws3's MAC: {ws3_mac}\n")
     
     # Pass them to the script as arguments
-    cmd = f'/bin/sh protect_ARP.sh {r1_mac} {ws3_mac}'
+    cmd = f'/bin/sh protection/protect_ARP.sh {r1_mac} {ws3_mac}'
     output = net['ws2'].cmd(cmd)
     info(output)
 
 def apply_DDoS_protection(net: Mininet) -> None:
     info("*** Applying DDoS protection rules on r1\n")
-    net['r1'].cmd('/bin/sh protect_DNS_DDoS.sh')
+    net['r1'].cmd('/bin/sh protection/protect_DNS_DDoS.sh')
 
 
 if __name__ == '__main__':

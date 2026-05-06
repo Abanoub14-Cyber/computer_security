@@ -46,9 +46,8 @@ sudo python3 topo.py -p
 | `-d` | DNS reflected DDoS |
 | `-a` | ARP cache poisoning |
 
-All scripts (`rules_r*.sh`, `protect_*.sh`, `attack_*.py`) must be in the same directory as `topo.py`.
 
-> **Note:** Protections can be applied at any time from the Mininet CLI, even if the topology was started without them. From any router/host shell in the CLI (e.g. `mininet> r2 sh protect_ICMP.sh`), or using the commands listed in each section below.
+> **Note:** Protections can be applied at any time from the Mininet CLI, even if the topology was started without them. From any router/host shell in the CLI (e.g. `mininet> r2 sh protection/protect_ICMP.sh`), or using the commands listed in each section below.
 
 ---
 
@@ -58,7 +57,7 @@ All scripts (`rules_r*.sh`, `protect_*.sh`, `attack_*.py`) must be in the same d
 
 **Attack** — from `internet`, scan the DMZ subnet:
 ```bash
-internet> python3 attack_ICMP.py 10.12.0.0/24
+internet> python3 attack/attack_ICMP.py 10.12.0.0/24
 ```
 Sends ICMP echo-requests to all addresses and lists live hosts.
 
@@ -70,7 +69,7 @@ Without protection you'll see continuous echo-request/reply pairs. With protecti
 
 **Apply protection at runtime:**
 ```bash
-r2> sh protect_ICMP.sh
+r2> sh protection/protect_ICMP.sh
 ```
 
 **Protection** (`protect_ICMP.sh`) — rate-limits ICMP echo-requests per source to 5/second (burst 3) on r2. Excess packets are dropped.
@@ -81,7 +80,7 @@ r2> sh protect_ICMP.sh
 
 **Attack** — from `internet`, scan a DMZ server:
 ```bash
-internet> python3 attack_TCP.py 10.12.0.10 1 1024
+internet> python3 attack/attack_TCP.py 10.12.0.10 1 1024
 ```
 Sends SYN packets and identifies open ports from SYN-ACK responses.
 
@@ -93,7 +92,7 @@ Without protection, SYN-ACKs come back for open ports. With protection, SYNs are
 
 **Apply protection at runtime:**
 ```bash
-r2> sh protect_TCP.sh
+r2> sh protection/protect_TCP.sh
 ```
 
 **Protection** (`protect_TCP.sh`) — rate-limits new TCP SYN connections per source to 5/second (burst 3) on r2. Excess SYNs are dropped.
@@ -104,7 +103,7 @@ r2> sh protect_TCP.sh
 
 **Attack** — from `internet`, against a DMZ SSH server:
 ```bash
-internet> python3 attack_SSH.py 10.12.0.10 mininet wordlist.txt
+internet> python3 attack/attack_SSH.py 10.12.0.10 mininet wordlist.txt
 ```
 Iterates through `wordlist.txt` attempting SSH logins. The included wordlist is intentionally small for demonstration; real-world lists are far larger.
 
@@ -116,7 +115,7 @@ Without protection, each attempt produces a full TCP handshake. With protection,
 
 **Apply protection at runtime:**
 ```bash
-r2> sh protect_SSH.sh
+r2> sh protection/protect_SSH.sh
 ```
 
 **Protection** (`protect_SSH.sh`) — sources exceeding 3 new SSH connections/minute are dynamically blacklisted for 5 minutes on r2.
@@ -128,7 +127,7 @@ r2> sh protect_SSH.sh
 
 **Attack** — from `ws3`, spoofing the victim's IP toward the DNS server:
 ```bash
-ws3> python3 attack_DNS_DDoS.py 10.1.0.2 10.12.0.20 1000
+ws3> python3 attack/attack_DNS_DDoS.py 10.1.0.2 10.12.0.20 1000
 ```
 Sends 1000 spoofed DNS queries with `src=victim`. The DNS server floods the victim with unsolicited replies.
 
@@ -144,7 +143,7 @@ Without protection, ws2 is bombarded with DNS responses it never requested. With
 
 **Apply protection at runtime:**
 ```bash
-r2> sh protect_DNS_DDoS.sh
+r2> sh protection/protect_DNS_DDoS.sh
 ```
 
 **Protection** (`protect_DNS_DDoS.sh`) — rate-limits UDP responses from the DNS server (`10.12.0.20:53`) to any single destination at 5/second (burst 10) on r2. Excess responses are dropped.
@@ -156,7 +155,7 @@ r2> sh protect_DNS_DDoS.sh
 
 **Attack** — from `ws3` on the LAN, intercept traffic between `ws2` and `r1`:
 ```bash
-ws3> python3 attack_ARP.py 10.1.0.2 10.1.0.1 ws3-eth0
+ws3> python3 attack/attack_ARP.py 10.1.0.2 10.1.0.1 ws3-eth0
 ```
 Sends gratuitous ARP replies to both victims, associating each other's IP with ws3's MAC. IP forwarding is enabled on ws3 so traffic still flows (transparent MITM).
 
@@ -175,7 +174,7 @@ With protection, `ip neigh show` on ws2 will always show r1's real MAC regardles
 # Get the real MACs first, then run on ws2
 r1> cat /sys/class/net/r1-eth0/address
 ws3> cat /sys/class/net/ws3-eth0/address
-ws2> sh protect_ARP.sh <r1_mac> <ws3_mac>
+ws2> sh protection/protect_ARP.sh <r1_mac> <ws3_mac>
 ```
 
 **Protection** (`protect_ARP.sh`) — installs permanent static ARP entries on ws2 for r1 and ws3, preventing the cache from being overwritten by spoofed replies.
