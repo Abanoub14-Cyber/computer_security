@@ -151,6 +151,8 @@ def apply_protections(net: Mininet, protections):
             apply_TCP_protection(net)
         if prot=="s":
             apply_SSH_protection(net)
+        if prot=="d":
+            apply_DDoS_protection(net)
         if prot=="a":
             apply_ARP_protection(net)
             
@@ -181,6 +183,10 @@ def apply_ARP_protection(net: Mininet) -> None:
     output = net['ws2'].cmd(cmd)
     info(output)
 
+def apply_DDoS_protection(net: Mininet) -> None:
+    info("*** Applying DDoS protection rules on r1\n")
+    net['r1'].cmd('/bin/sh protect_DNS_DDoS.sh')
+
 
 if __name__ == '__main__':
 
@@ -195,6 +201,8 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--TCP_protection", action= "store_true", help="Applying TCP scan protection")
     parser.add_argument("-s", "--SSH_protection", action= "store_true", help="Applying SSH brute force protection")
     parser.add_argument("-a", "--ARP_protection", action= "store_true", help="Applying ARP poisoning protection")
+    parser.add_argument("-d", "--DDoS_protection", action= "store_true", help="Applying DNS reflected DDoS protection")
+
 
     # Parse arguments
     args = parser.parse_args()
@@ -210,7 +218,8 @@ if __name__ == '__main__':
         protections.append("t")
     if args.SSH_protection:
         protections.append("s")
+    if args.DDoS_protection:
+        protections.append("d")
     if args.ARP_protection:
         protections.append("a")
     run(protections)
-
