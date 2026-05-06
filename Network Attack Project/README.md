@@ -104,7 +104,7 @@ r2> sh protect_TCP.sh
 
 **Attack** — from `internet`, against a DMZ SSH server:
 ```bash
-internet> python3 attack_SSH.py 10.12.0.10 root wordlist.txt
+internet> python3 attack_SSH.py 10.12.0.10 mininet wordlist.txt
 ```
 Iterates through `wordlist.txt` attempting SSH logins. The included wordlist is intentionally small for demonstration; real-world lists are far larger.
 
@@ -134,7 +134,11 @@ Sends 1000 spoofed DNS queries with `src=victim`. The DNS server floods the vict
 
 **Verify** — on ws2, capture the flood of unsolicited DNS replies:
 ```bash
-ws2> tcpdump -i ws2-eth0 'udp port 53'
+ws2> tcpdump -i ws2-eth0 'udp port 5353'
+```
+On dns capture the flow of requests and replies to observe the amplification factor (around x1,6) in reply size.
+```bash
+ws2> tcpdump -i any udp port 5353
 ```
 Without protection, ws2 is bombarded with DNS responses it never requested. With protection, the rate of incoming responses is capped and most are dropped at r2.
 

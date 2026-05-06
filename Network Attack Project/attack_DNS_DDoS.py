@@ -3,8 +3,8 @@
 DNS reflected DoS attack.
 Run from the ws3 host (10.1.0.3).
 Spoofed source IP is the victim's IP, sent to a DNS reflector.
-Usage: python3 attack_dns_reflection.py <victim_ip> <dns_server> [count]
-Example: python3 attack_dns_reflection.py 10.1.0.2 10.12.0.20 1000
+Usage: python3 attack_DNS_DDoS.py <victim_ip> <dns_server> [count]
+Example: python3 attack_DNS_DDoS.py 10.1.0.2 10.12.0.20 1000
 """
 import sys
 from scapy.all import IP, UDP, DNS, DNSQR, send, conf

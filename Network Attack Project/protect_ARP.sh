@@ -12,11 +12,8 @@ if [ -z "$R1_MAC" ] || [ -z "$WS3_MAC" ]; then
 fi
 
 echo "[*] Installing static ARP entries on $INTERFACE"
-
-# Flush any existing entries
 ip neigh flush dev "$INTERFACE"
 
-# Pin each protected IP -> MAC mapping permanently
 ip neigh replace 10.1.0.1 lladdr "$R1_MAC" dev "$INTERFACE" nud permanent
 echo "[+] Pinned 10.1.0.1 -> $R1_MAC (PERMANENT)"
 

@@ -195,7 +195,7 @@ if __name__ == '__main__':
         prog="topo.py",
         description="Mininet topology for the network attacks project of the course LINFO2347."
     )
-    # Optional flag -p
+    # Optional flags
     parser.add_argument("-p", "--pingall", action="store_true", help="Perform pingall test")
     parser.add_argument("-i","--ICMP_protection", action="store_true", help="Applying ICMP scan protection")
     parser.add_argument("-t", "--TCP_protection", action= "store_true", help="Applying TCP scan protection")
